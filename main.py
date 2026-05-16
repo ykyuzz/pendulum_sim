@@ -60,6 +60,41 @@ if __name__ == "__main__":
 
     y = [initial_theta1, initial_theta2, theta1_velocity, theta2_velocity]
     params = [weight_mass1, weight_mass2, weight_stick1, weight_stick2, length, base_acceleration, base_velocity, gravitational_acceleration]
-    solution = scipy.integrate.solve_ivp(ode_system, [0, max_time], y, t_eval=times, args=(params,))
-    theta1_values = solution.y[0]
-    theta2_values = solution.y[1]
+    #solution = scipy.integrate.solve_ivp(ode_system, [0, max_time], y, t_eval=times, args=(params,))
+
+
+    locus_x = []
+    locus_y = []
+    locus_theta1 = []
+    locus_theta2 = []
+
+    ims = []
+
+    for time in times:
+        theta1_acceleration, theta2_acceleration = pendulum_motion(weight_mass1, weight_mass2, weight_stick1, weight_stick2, length, base_acceleration, base_velocity, gravitational_acceleration, theta1, theta2, theta1_velocity, theta2_velocity)
+        theta1_velocity += theta1_acceleration * (max_time / step)
+        theta2_velocity += theta2_acceleration * (max_time / step)
+        theta1 += theta1_velocity * (max_time / step)
+        theta2 += theta2_velocity * (max_time / step)
+
+        #for animation
+        locus_x.append(length * (np.sin(theta1) + np.sin(theta2)))
+        locus_y.append(-length * (np.cos(theta1) + np.cos(theta2)))
+        locus_theta1.append(theta1)
+        locus_theta2.append(theta2)
+        stick1 = plt.plot([0, length * np.sin(theta1)], [0, -length * np.cos(theta1)], c="red", linewidth=1)
+        stick2 = plt.plot([length * np.sin(theta1), length * (np.sin(theta1) + np.sin(theta2))], [-length * np.cos(theta1), -length * (np.cos(theta1) + np.cos(theta2))], c="red", linewidth=1)
+        mass1 = plt.plot(length * np.sin(theta1), -length * np.cos(theta1), c="red", markersize=weight_mass1 * 100)
+        mass2 = plt.plot(length * (np.sin(theta1) + np.sin(theta2)), -length * (np.cos(theta1) + np.cos(theta2)), c="red", markersize=weight_mass2 * 100)
+        im = plt.plot(locus_x, locus_y, c="blue", linestyle="--") + stick1 + stick2 + mass1 + mass2
+        ims.append(im)
+
+    animation = animation.ArtistAnimation(plt.gcf(), ims, interval=1)
+    plt.show()
+
+    plt.plot(times, np.degrees(locus_theta1), label="theta1")
+    plt.plot(times, np.degrees(locus_theta2), label="theta2")
+    plt.xlabel("Time")
+    plt.ylabel("Angle")
+    plt.legend()
+    plt.show()
