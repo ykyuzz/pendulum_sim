@@ -35,20 +35,22 @@ def ode_system(t, y, params):
     return [theta1_velocity, theta2_velocity, theta1_acceleration, theta2_acceleration]
 
 def controler_mass1(theta1_velocity, theta1, total_theta1):
-    P = -0.02 * (np.pi - theta1)
-    D = -0.08 * (theta1_velocity)
-    I = 0.005 * (total_theta1)
-    return P + D + I
+    #P = 0.3 * (np.pi - theta1)
+    #D = -0.2 * (theta1_velocity)
+    #I = 0.5 * (total_theta1)
+    #return P + D + I
+    return 0
 
 def controler_mass2(theta2_velocity, theta2, total_theta2):
-    P = 0.005 * (np.pi - theta2)
-    D = -0.12 * theta2_velocity
-    I = 0.005 * total_theta2
-    return P + D + I
+    #P = 0.5 * (np.pi - theta2)
+    #D = -0.2 * theta2_velocity
+    #I = 0.5 * total_theta2
+    #return P + D + I
+    return 0
 
 if __name__ == "__main__":
     step = 2000
-    max_time = 10
+    max_time = 20
     times = np.linspace(0, max_time, step)
 
     weight_mass1 = 0.1
@@ -61,7 +63,7 @@ if __name__ == "__main__":
     base_x = 0
     gravitational_acceleration = -9.81
 
-    initial_theta1 = np.pi / 180 * 100
+    initial_theta1 = np.pi / 180 * 150
     initial_theta2 = np.pi / 180 * -20
     theta1_velocity = 0
     theta2_velocity = 0
@@ -92,6 +94,9 @@ if __name__ == "__main__":
 
     ims = []
 
+    trig_time = 1
+
+
     for time in times:
         theta1_acceleration, theta2_acceleration = pendulum_motion(weight_mass1, weight_mass2, length, base_acceleration, base_velocity, gravitational_acceleration, theta1, theta2, theta1_velocity, theta2_velocity)
         theta1_velocity += theta1_acceleration * (max_time / step)
@@ -102,12 +107,11 @@ if __name__ == "__main__":
         total_theta2 += (np.pi / 2 - theta2) * (max_time / step)
         control_input1 = controler_mass1(theta1_velocity, theta1, total_theta1)
         control_input2 = controler_mass2(theta2_velocity, theta2, total_theta2)
-        if base_x < -0.3 or base_x > 0.3:
+        if base_x < -1.8 or base_x > 1.8:
             base_acceleration = -1 * base_x * step / max_time
 
-        elif time < 2:
-            #base_acceleration = ((np.floor(time * max_time / step) % 2) * 2 - 1) * 5
-            base_acceleration = control_input1 + control_input2
+        elif time < trig_time:
+            base_acceleration = time*np.sin(time / trig_time * 10 * np.pi) * 100
         else:
             base_acceleration = control_input1 + control_input2
         base_velocity += base_acceleration * (max_time / step)
@@ -133,10 +137,11 @@ if __name__ == "__main__":
         stick2 = plt.plot([base_x + length * np.sin(theta1), base_x + length * (np.sin(theta1) + np.sin(theta2))], [-length * np.cos(theta1), -length * (np.cos(theta1) + np.cos(theta2))], c="red", linewidth=1)
         mass1 = plt.plot(base_x + length * np.sin(theta1), -length * np.cos(theta1), c="red", markersize=weight_mass1 * 100)
         mass2 = plt.plot(base_x + length * (np.sin(theta1) + np.sin(theta2)), -length * (np.cos(theta1) + np.cos(theta2)), c="red", markersize=weight_mass2 * 100)
-        im = plt.plot(locus_x, locus_y, c="blue", linestyle="--") + stick1 + stick2 + mass1 + mass2
+        time_text = plt.text(0.5, 1.05, "t=" + str(time), ha="center", transform=plt.gca().transAxes)
+        im = plt.plot(locus_x, locus_y, c="blue", linestyle="--") + stick1 + stick2 + mass1 + mass2 + [time_text]
         ims.append(im)
 
-    animation = animation.ArtistAnimation(plt.gcf(), ims, interval=max_time / step * 100)
+    animation = animation.ArtistAnimation(plt.gcf(), ims, interval=max_time / step * 10)
     plt.show()
 
     plt.plot(times, locus_theta1, label="theta1")
